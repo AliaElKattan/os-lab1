@@ -79,32 +79,41 @@ void write_bootblock(FILE **image_file, FILE *boot_file, Elf32_Ehdr *boot_hdr, E
     write_image(image_file, boot_file, boot_hdr, boot_phdr);
     
     fseek(*image_file, BOOT_LOADER_SIG_OFFSET, SEEK_SET);
+
+    //adding the 55aa signature for end of bootblock
     fputc(0x55, *image_file);
-    fputc(0xAA, *image_file); //adding the signature for end of bootblock
+    fputc(0xAA, *image_file); 
 }
 
 //write kernel to image file
 void write_kernel(FILE **image_file, FILE *kernel_file, Elf32_Ehdr *kernel_hdr, Elf32_Phdr *kernel_phdr) {
+    //fseek image file from offset sector_size (defined above) at beginning of file
     fseek(*image_file, SECTOR_SIZE, SEEK_SET);
+    
+    //added a write_image function because its reused for write_image
     write_image(image_file, kernel_file, kernel_hdr, kernel_phdr);
 }
 
 
 //add error detection??
 
+//write kernel or bootblock to image file
 void write_image(FILE **image_file, FILE *read_file, Elf32_Ehdr *elf_hdr, Elf32_Phdr *phdr) {
     
     size_t padding;
+
+    //index of program header
     int phdr_index;
     char buffer[SECTOR_SIZE];
     size_t bytes_read=0;
     
+    //track progress in current loop
     size_t bytes_remaining, bytes_to_read, current_read;
     
     
     //in each phdr
     
-    
+    //loop through program headers
     for (phdr_index = 0; phdr_index < (*elf_hdr).e_phnum; phdr_index++) {
         
         bytes_remaining = phdr[phdr_index].p_filesz;
@@ -113,13 +122,15 @@ void write_image(FILE **image_file, FILE *read_file, Elf32_Ehdr *elf_hdr, Elf32_
         fseek(read_file, phdr[phdr_index].p_offset, SEEK_SET);
         
         while (bytes_remaining > 0) {
+
+            //if bytes remaining to read are less than sector size, we need to read the number of bytes remaining
             
             if (bytes_remaining < SECTOR_SIZE)
                 bytes_to_read = bytes_remaining;
-            
+
             else bytes_to_read = SECTOR_SIZE;
             
-            current_read = fread(buffer, 1, bytes_to_read,read_file);
+            current_read = fread(buffer, 1, bytes_to_read, read_file);
             current_read = fwrite(buffer, 1, bytes_to_read, *image_file);
             
             bytes_read+= current_read;
