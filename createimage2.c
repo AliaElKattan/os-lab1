@@ -155,7 +155,7 @@ void write_image(FILE **image_file, FILE *read_file, Elf32_Ehdr *elf_hdr, Elf32_
         padding--;
     }
            
-           }
+    }
 
 
 
@@ -165,6 +165,7 @@ int count_kernel_sectors(Elf32_Ehdr *kernel_hdr, Elf32_Phdr *kernel_phdr){
 	int sector_number;
 	int x;
 
+    //loop through kernel headers
 	for (x = 0; x<(*kernel_hdr).e_phnum;x++) {
 		kernel_size+=kernel_phdr[x].p_memsz;
 	}
